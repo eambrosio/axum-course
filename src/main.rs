@@ -2,7 +2,8 @@ use std::net::SocketAddr;
 
 use axum::{
     extract::{Path, Query},
-    response::{Html, IntoResponse},
+    middleware,
+    response::{Html, IntoResponse, Response},
     routing::{get, get_service},
     Router,
 };
@@ -18,15 +19,23 @@ async fn main() {
     let routes_hello = Router::new()
         .merge(routes_hello())
         .merge(web::routes_login::routes())
+        .layer(middleware::map_response(main_response_mapper))
         .fallback_service(routes_static());
 
     let address = SocketAddr::from(([127, 0, 0, 1], 8080));
-    println!("->> LISTENING ON {address}\n");
+    println!("->> LIS TENING ON {address}\n");
 
     axum::Server::bind(&address)
         .serve(routes_hello.into_make_service())
         .await
         .expect("server failed");
+}
+
+async fn main_response_mapper(res: Response) -> Response {
+    println!("->> {:<15} - main_response_mapper", "RES_MAPPER");
+
+    println!("");
+    res
 }
 
 fn routes_static() -> Router {
