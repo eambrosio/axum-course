@@ -3,16 +3,17 @@ use std::net::SocketAddr;
 use axum::{
     extract::{Path, Query},
     response::{Html, IntoResponse},
-    routing::get,
+    routing::{get, get_service},
     Router,
 };
 use serde::Deserialize;
+use tower_http::services::ServeDir;
 
 #[tokio::main]
 async fn main() {
     let routes_hello = Router::new()
-        .route("/hello", get(handler_hello))
-        .route("/hello2/:name", get(handler_hello2));
+        .merge(routes_hello())
+        .fallback_service(routes_static());
 
     let address = SocketAddr::from(([127, 0, 0, 1], 8080));
     println!("->> LISTENING ON {address}\n");
@@ -22,6 +23,17 @@ async fn main() {
         .await
         .expect("server failed");
 }
+
+fn routes_static() -> Router {
+    Router::new().nest_service("/", get_service(ServeDir::new("./")))
+}
+
+fn routes_hello() -> Router {
+    Router::new()
+        .route("/hello", get(handler_hello))
+        .route("/hello2/:name", get(handler_hello2))
+}
+
 #[derive(Debug, Deserialize)]
 struct HelloParams {
     name: Option<String>,
