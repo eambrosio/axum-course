@@ -9,10 +9,15 @@ use axum::{
 use serde::Deserialize;
 use tower_http::services::ServeDir;
 
+pub use self::error::{Error, Result};
+mod error;
+mod web;
+
 #[tokio::main]
 async fn main() {
     let routes_hello = Router::new()
         .merge(routes_hello())
+        .merge(web::routes_login::routes())
         .fallback_service(routes_static());
 
     let address = SocketAddr::from(([127, 0, 0, 1], 8080));
@@ -41,7 +46,7 @@ struct HelloParams {
 
 // hello?name=Emilio
 async fn handler_hello(Query(params): Query<HelloParams>) -> impl IntoResponse {
-    println!("->> {:<12} - handler_hello {params:?}", "HANDLER");
+    println!("->> {:<15} - handler_hello {params:?}", "HANDLER");
 
     let name = params.name.as_deref().unwrap_or("World!");
     Html(format!("Hello <strong>{name}</strong>"))
@@ -49,7 +54,7 @@ async fn handler_hello(Query(params): Query<HelloParams>) -> impl IntoResponse {
 
 // hello/Emilio
 async fn handler_hello2(Path(name): Path<String>) -> impl IntoResponse {
-    println!("->> {:<12} - handler_hello2 {name:?}", "HANDLER");
+    println!("->> {:<15} - handler_hello2 {name:?}", "HANDLER");
 
     Html(format!("Hello <strong>{name}</strong>"))
 }
