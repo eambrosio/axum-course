@@ -4,66 +4,64 @@ use axum::{
     extract::{Path, Query},
     middleware,
     response::{Html, IntoResponse, Response},
-    routing::{get, get_service},
+    routing::get,
     Router,
 };
 use serde::Deserialize;
-use tower_http::services::ServeDir;
 
-pub use self::error::{Error, Result};
 mod error;
 mod web;
 
+use self::error::{Error, Result};
+
 #[tokio::main]
 async fn main() {
-    let routes_hello = Router::new()
-        .merge(routes_hello())
+    let routes = Router::new()
+        .merge(hello_routes())
         .merge(web::routes_login::routes())
-        .layer(middleware::map_response(main_response_mapper))
-        .fallback_service(routes_static());
+        .layer(middleware::map_response(main_response_mapper));
 
-    let address = SocketAddr::from(([127, 0, 0, 1], 8080));
-    println!("->> LIS TENING ON {address}\n");
+    // region:      ---START SERVER
+    let address = SocketAddr::from(([127, 0, 0, 1], 8081));
+    let listener = tokio::net::TcpListener::bind(&address).await.unwrap();
+    println!("->> LISTENNING ON {address}\n");
 
-    axum::Server::bind(&address)
-        .serve(routes_hello.into_make_service())
+    axum::serve(listener, routes.into_make_service())
         .await
-        .expect("server failed");
+        .unwrap();
+    // endregion:   --- START SERVER
 }
 
-async fn main_response_mapper(res: Response) -> Response {
-    println!("->> {:<15} - main_response_mapper", "RES_MAPPER");
+async fn main_response_mapper(response: Response) -> Response {
+    println!("->> {:<15} - main_reponse_mapper", "RESPONSE MAPPER");
 
-    println!("");
-    res
+    println!();
+    response
 }
 
-fn routes_static() -> Router {
-    Router::new().nest_service("/", get_service(ServeDir::new("./")))
-}
-
-fn routes_hello() -> Router {
+// region:          ---Routes hello
+fn hello_routes() -> Router {
     Router::new()
-        .route("/hello", get(handler_hello))
-        .route("/hello2/:name", get(handler_hello2))
+        .route("/hello-query", get(hello_query_handler))
+        .route("/hello-path/:name", get(hello_path_handler))
 }
-
 #[derive(Debug, Deserialize)]
 struct HelloParams {
     name: Option<String>,
 }
 
-// hello?name=Emilio
-async fn handler_hello(Query(params): Query<HelloParams>) -> impl IntoResponse {
-    println!("->> {:<15} - handler_hello {params:?}", "HANDLER");
+// e.g. /hello-query?name=Emilio
+async fn hello_query_handler(Query(params): Query<HelloParams>) -> impl IntoResponse {
+    println!("->> {:<15} - handler hello by query", "HANDLER");
 
-    let name = params.name.as_deref().unwrap_or("World!");
+    let name = params.name.as_deref().unwrap_or("World");
     Html(format!("Hello <strong>{name}</strong>"))
 }
 
-// hello/Emilio
-async fn handler_hello2(Path(name): Path<String>) -> impl IntoResponse {
-    println!("->> {:<15} - handler_hello2 {name:?}", "HANDLER");
+// e.g. /hello-path/Emilio
+async fn hello_path_handler(Path(name): Path<String>) -> impl IntoResponse {
+    println!("->> {:<15} - handler hello by path", "HANDLER");
 
     Html(format!("Hello <strong>{name}</strong>"))
 }
+// endregion:       ---Routes hello
