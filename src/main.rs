@@ -4,10 +4,11 @@ use axum::{
     extract::{Path, Query},
     middleware,
     response::{Html, IntoResponse, Response},
-    routing::get,
+    routing::{get, get_service},
     Router,
 };
 use serde::Deserialize;
+use tower_http::services::ServeDir;
 
 mod error;
 mod web;
@@ -19,9 +20,10 @@ async fn main() {
     let routes = Router::new()
         .merge(hello_routes())
         .merge(web::routes_login::routes())
-        .layer(middleware::map_response(main_response_mapper));
+        .layer(middleware::map_response(main_response_mapper))
+        .fallback_service(routes_static());
 
-    // region:      ---START SERVER
+    // region:       ---START SERVER
     let address = SocketAddr::from(([127, 0, 0, 1], 8081));
     let listener = tokio::net::TcpListener::bind(&address).await.unwrap();
     println!("->> LISTENNING ON {address}\n");
@@ -37,6 +39,10 @@ async fn main_response_mapper(response: Response) -> Response {
 
     println!();
     response
+}
+
+fn routes_static() -> Router {
+    Router::new().nest_service("/", get_service(ServeDir::new("./")))
 }
 
 // region:          ---Routes hello
