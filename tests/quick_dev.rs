@@ -15,6 +15,6 @@ async fn quick_dev() -> Result<()> {
         .await?
         .print()
         .await?;
- 
+
     Ok(())
 }
