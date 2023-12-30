@@ -7,6 +7,9 @@ pub type Result<T> = core::result::Result<T, Error>;
 pub enum Error {
     LoginError,
     UnexpectedError,
+
+    // Model Errors
+    TicketDeleteFailIdNotFound { id: u64 },
 }
 
 impl IntoResponse for Error {
@@ -17,6 +20,9 @@ impl IntoResponse for Error {
             Error::LoginError => (StatusCode::FORBIDDEN, "FORBIDDEN_ERROR").into_response(),
             Error::UnexpectedError => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "UNHANDLED_ERROR").into_response()
+            }
+            Error::TicketDeleteFailIdNotFound { id } => {
+                (StatusCode::NOT_FOUND, format!("Ticket {id} not found")).into_response()
             }
         }
     }

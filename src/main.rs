@@ -12,15 +12,21 @@ use tower_cookies::CookieManagerLayer;
 use tower_http::services::ServeDir;
 
 mod error;
+mod model;
 mod web;
+
+use crate::model::ModelController;
 
 use self::error::{Error, Result};
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    let state = ModelController::new().await?;
+
     let routes = Router::new()
         .merge(hello_routes())
         .merge(web::routes_login::routes())
+        .nest("/api", web::routes_tickets::routes(state.clone()))
         .layer(middleware::map_response(main_response_mapper))
         .layer(CookieManagerLayer::new())
         .fallback_service(routes_static());
@@ -34,6 +40,8 @@ async fn main() {
         .await
         .unwrap();
     // endregion:   --- START SERVER
+
+    Ok(())
 }
 
 async fn main_response_mapper(response: Response) -> Response {
