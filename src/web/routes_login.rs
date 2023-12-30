@@ -9,7 +9,7 @@ pub fn routes() -> Router {
 }
 
 async fn api_login(cookies: Cookies, payload: Json<LoginPayload>) -> Result<Json<Value>> {
-    println!("->> {:<20} - api_login", "HANDLER");
+    println!("->> {:<15} - api_login", "HANDLER");
 
     //TODO: implement real db/auth login
     if payload.username == "error" || payload.password == "error" {

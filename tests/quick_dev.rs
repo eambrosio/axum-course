@@ -16,10 +16,10 @@ async fn quick_dev() -> Result<()> {
         .print()
         .await?;
 
-    // let create_ticket = hc.do_post("/api/tickets", json!({"title": "AAA"}));
-    // create_ticket.await?.print().await?;
+    let create_ticket = hc.do_post("/api/tickets", json!({"title": "AAA"}));
+    create_ticket.await?.print().await?;
 
-    hc.do_delete("/api/tickets/1").await?.print().await?;
+    // hc.do_delete("/api/tickets/1").await?.print().await?;
     hc.do_get("/api/tickets").await?.print().await?;
 
     Ok(())

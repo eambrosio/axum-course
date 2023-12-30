@@ -23,10 +23,13 @@ use self::error::{Error, Result};
 async fn main() -> Result<()> {
     let state = ModelController::new().await?;
 
+    let routes_apis = web::routes_tickets::routes(state.clone())
+        .route_layer(middleware::from_fn(web::mw_auth::md_required_auth));
+
     let routes = Router::new()
         .merge(hello_routes())
         .merge(web::routes_login::routes())
-        .nest("/api", web::routes_tickets::routes(state.clone()))
+        .nest("/api", routes_apis)
         .layer(middleware::map_response(main_response_mapper))
         .layer(CookieManagerLayer::new())
         .fallback_service(routes_static());
