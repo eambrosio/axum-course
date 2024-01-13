@@ -10,6 +10,7 @@ pub enum Error {
 
     // Model Errors
     TicketDeleteFailIdNotFound { id: u64 },
+    AuthFailedWrongTokenFormat,
 
     // Auth Errors
     AuthFailedNoTokenCookie,
@@ -30,6 +31,7 @@ impl IntoResponse for Error {
             Error::AuthFailedNoTokenCookie => {
                 (StatusCode::FORBIDDEN, "FORBIDDEN_ERROR").into_response()
             }
+            _ => (StatusCode::INTERNAL_SERVER_ERROR, "UNHANDLED_ERROR").into_response(),
         }
     }
 }
