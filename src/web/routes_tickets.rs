@@ -5,6 +5,7 @@ use axum::{
 };
 
 use crate::{
+    ctx::Ctx,
     error::Result,
     model::{ModelController, Ticket, TicketPayload},
 };
@@ -20,30 +21,32 @@ pub fn routes(state: ModelController) -> Router {
 
 async fn create_ticket(
     State(state): State<ModelController>,
+    ctx: Ctx,
     Json(ticket_payload): Json<TicketPayload>,
 ) -> Result<Json<Ticket>> {
     println!("->> {:<15} - create ticket", "HANDLER");
 
-    let ticket = state.create_ticket(ticket_payload).await?;
+    let ticket = state.create_ticket(ctx, ticket_payload).await?;
 
     Ok(Json(ticket))
 }
 
-async fn list_tickets(State(state): State<ModelController>) -> Result<Json<Vec<Ticket>>> {
+async fn list_tickets(State(state): State<ModelController>, ctx: Ctx) -> Result<Json<Vec<Ticket>>> {
     println!("->> {:<15} - list tickets", "HANDLER");
 
-    let tickets = state.list_tickets().await?;
+    let tickets = state.list_tickets(ctx).await?;
 
     Ok(Json(tickets))
 }
 
 async fn delete_ticket(
     State(state): State<ModelController>,
+    ctx: Ctx,
     Path(id): Path<u64>,
 ) -> Result<Json<Ticket>> {
     println!("->> {:<15} - delete ticket", "HANDLER");
 
-    let ticket = state.delete_ticket(id).await?;
+    let ticket = state.delete_ticket(ctx, id).await?;
 
     Ok(Json(ticket))
 }

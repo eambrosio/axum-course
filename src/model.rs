@@ -4,12 +4,16 @@ use std::sync::{Arc, Mutex};
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::{Error, Result};
+use crate::{
+    ctx::Ctx,
+    error::{Error, Result},
+};
 
 // region:      --Ticket types
 #[derive(Clone, Serialize, Debug)]
 pub struct Ticket {
     pub id: u64,
+    pub user_id: u64,
     pub title: String,
 }
 
@@ -32,11 +36,12 @@ impl ModelController {
         })
     }
 
-    pub async fn create_ticket(&self, ticket_payload: TicketPayload) -> Result<Ticket> {
+    pub async fn create_ticket(&self, ctx: Ctx, ticket_payload: TicketPayload) -> Result<Ticket> {
         let mut tickets = self.tickets_store.lock().unwrap();
 
         let ticket = Ticket {
             id: tickets.len() as u64,
+            user_id: ctx.user_id(),
             title: ticket_payload.title,
         };
         tickets.push(Some(ticket.clone()));
@@ -44,7 +49,7 @@ impl ModelController {
         Ok(ticket)
     }
 
-    pub async fn list_tickets(&self) -> Result<Vec<Ticket>> {
+    pub async fn list_tickets(&self, _ctx: Ctx) -> Result<Vec<Ticket>> {
         let store = self.tickets_store.lock().unwrap();
 
         let tickets = store.iter().filter_map(|t| t.clone()).collect();
@@ -52,7 +57,7 @@ impl ModelController {
         Ok(tickets)
     }
 
-    pub async fn delete_ticket(&self, id: u64) -> Result<Ticket> {
+    pub async fn delete_ticket(&self, _ctx: Ctx, id: u64) -> Result<Ticket> {
         let mut store = self.tickets_store.lock().unwrap();
 
         let ticket = store.get_mut(id as usize).and_then(|t| t.take());
